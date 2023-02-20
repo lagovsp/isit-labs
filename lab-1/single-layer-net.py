@@ -1,6 +1,8 @@
 import math
 from typing import Callable
-from texttable import Texttable  # -> PrettyTable
+from datetime import datetime
+from itertools import product
+from texttable import Texttable
 
 
 class Net:
@@ -8,11 +10,13 @@ class Net:
                  weights_num: int = None,
                  norm: float = None,
                  af: Callable[[float], int] = None,
-                 af_der: Callable[[float], float] = None):
+                 af_der: Callable[[float], float] = None,
+                 name: str = None):
         self.weights: list[float] = [0] * weights_num
         self.norm = norm
         self.af = af
         self.af_der = af_der
+        self.name = name
 
     def predict(self, args: list[int]) -> (int, float):
         net = sum([args[i] * w for i, w in enumerate(self.weights)])
@@ -68,7 +72,13 @@ def modify_lists(logs_list: list[list]) -> list[list]:
     return logs_list
 
 
-def display_net_logs(logs: list[list], filename=None) -> None:
+def custom_time_str() -> str:
+    return datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+
+
+def display_net(logs: list[list],
+                to_file: bool = False,
+                file_name: str = f'net-{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}') -> None:
     logs = modify_lists(logs)
     logs.insert(0, ['k', 'w', 'y', 'E'])
 
@@ -78,12 +88,11 @@ def display_net_logs(logs: list[list], filename=None) -> None:
     t.set_deco(Texttable.BORDER | Texttable.HEADER | Texttable.VLINES)
     t.add_rows(logs)
 
-    if isinstance(filename, None):
+    if not to_file:
         print(t.draw())
         return
-    with open(f'{filename}.log', 'w') as logger:
-        # logger.write(t.)
-        pass
+    with open(f'{file_name}.log', 'w') as logger:
+        logger.write(t.draw())
 
 
 bf: Callable[[list[bool]], bool] = lambda args: (args[2] and args[3]) or (not args[0]) or (not args[1])
@@ -93,45 +102,33 @@ threshold_af_der: Callable[[float], float] = lambda net: 1
 
 logistic_af_out: Callable[[float], int] = lambda net: 1 if (math.tanh(net) + 1) / 2 >= 0.5 else 0
 logistic_af_der: Callable[[float], float] = lambda net: 1 / (2 * (math.cosh(net) ** 2))
-# logistic_af_der: Callable[[float], float] = lambda net: 1 / (math.cosh(2 * net) + 1) they use this ?
 
-# -> get from combinations
-inputs = [
-    [0, 0, 0, 0],
-    [0, 0, 0, 1],
-    [0, 0, 1, 0],
-    [0, 0, 1, 1],
-    [0, 1, 0, 0],
-    [0, 1, 0, 1],
-    [0, 1, 1, 0],
-    [0, 1, 1, 1],
-    [1, 0, 0, 0],
-    [1, 0, 0, 1],
-    [1, 0, 1, 0],
-    [1, 0, 1, 1],
-    [1, 1, 0, 0],
-    [1, 1, 0, 1],
-    [1, 1, 1, 0],
-    [1, 1, 1, 1],
-]
+inputs = list(map(append_left_true,
+                  list(map(append_bf_val,
+                           list(map(list,
+                                    list(product([0, 1], repeat=4))))))))
 
 
 def main():
     global inputs
-    inputs = list(map(append_bf_val, inputs))
-    inputs = list(map(append_left_true, inputs))
 
     net_threshold = Net(weights_num=len(inputs[0]) - 1,
                         norm=0.3,
                         af=threshold_af_out,
-                        af_der=threshold_af_der)
-    display_net_logs(learn(net_threshold, inputs))
+                        af_der=threshold_af_der,
+                        name='threshold')
+    display_net(learn(net_threshold, inputs),
+                to_file=True,
+                file_name=f'{net_threshold.name}-{custom_time_str()}')
 
     net_logistic = Net(weights_num=len(inputs[0]) - 1,
                        norm=0.3,
                        af=logistic_af_out,
-                       af_der=logistic_af_der)
-    display_net_logs(learn(net_logistic, inputs))
+                       af_der=logistic_af_der,
+                       name='logistic')
+    display_net(learn(net_logistic, inputs),
+                to_file=True,
+                file_name=f'{net_logistic.name}-{custom_time_str()}')
 
 
 if __name__ == '__main__':

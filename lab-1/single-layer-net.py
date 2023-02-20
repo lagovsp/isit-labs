@@ -78,7 +78,7 @@ def custom_time_str() -> str:
 
 def display_net(logs: list[list],
                 to_file: bool = False,
-                file_name: str = f'net-{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}') -> None:
+                file_name: str = f'net-{custom_time_str()}') -> None:
     logs = modify_lists(logs)
     logs.insert(0, ['k', 'w', 'y', 'E'])
 

@@ -145,7 +145,7 @@ def main():
     time = custom_time_str()
     var = 6
 
-    with open(f'truthtable-var-{var}.dat', 'w') as logger:
+    with open(f'truthtable-v{var}.dat', 'w') as logger:
         logger.write(truthtable(bf, 4))
 
     # All sets used
@@ -153,7 +153,7 @@ def main():
                             norm=0.3,
                             af=threshold_af_out,
                             af_der=threshold_af_der,
-                            name='threshold-all-learn')
+                            name=f'threshold-all-v{var}')
     display_net(learn(net_threshold_all,
                       inputs,
                       set(range(len(inputs))),
@@ -165,7 +165,7 @@ def main():
                            norm=0.3,
                            af=logistic_af_out,
                            af_der=logistic_af_der,
-                           name='logistic-all-learn')
+                           name=f'logistic-all-v{var}')
     display_net(learn(net_logistic_all,
                       inputs,
                       set(range(len(inputs))),
@@ -178,7 +178,7 @@ def main():
                              norm=0.3,
                              af=threshold_af_out,
                              af_der=threshold_af_der,
-                             name='threshold-part-learn')
+                             name=f'threshold-part-v{var}')
     # display_net(learn(net_threshold_part,
     #                   inputs,
     #                   {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13},
@@ -190,7 +190,7 @@ def main():
                             norm=0.3,
                             af=logistic_af_out,
                             af_der=logistic_af_der,
-                            name='logistic-part-learn')
+                            name=f'logistic-part-v{var}')
     # display_net(learn(net_logistic_part,
     #                   inputs,
     #                   {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13},

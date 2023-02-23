@@ -4,7 +4,7 @@ from single_layer_net import *
 def main():
     time = custom_time_str()
 
-    with open(f'truthtable-v{var}.dat', 'w') as logger:
+    with open(f'tt-v{var}.dat', 'w') as logger:
         logger.write(truthtable(bf, 4))
 
     # All sets used
@@ -12,7 +12,7 @@ def main():
                             norm=0.3,
                             af=threshold_af_out,
                             af_der=threshold_af_der,
-                            name=f'threshold-all-v{var}')
+                            name=f'th-fl-v{var}')
     display_net(learn(net_threshold_all,
                       inputs,
                       set(range(len(inputs))),
@@ -24,7 +24,7 @@ def main():
                            norm=0.3,
                            af=logistic_af_out,
                            af_der=logistic_af_der,
-                           name=f'logistic-all-v{var}')
+                           name=f'l-fl-v{var}')
     display_net(learn(net_logistic_all,
                       inputs,
                       set(range(len(inputs))),

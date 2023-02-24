@@ -3,6 +3,7 @@ from typing import Callable
 from datetime import datetime
 from itertools import product
 from texttable import Texttable
+from enum import Enum
 
 
 class Net:
@@ -46,21 +47,19 @@ def learn(net: Net,
           sets: list[list[int]],
           learn_indexes: set[int],
           epoch_limit=None) -> (bool, list[list], set[int]):
-    success_count, epochs, i, = 0, list(), 0
+    success_count, epochs = 0, list()
     learn_sets = [sets[i] for i in learn_indexes]
-    test_sets = list()
-    for j in range(len(sets)):
-        test_sets.append(sets[j])
+    test_sets = [sets[i] for i in range(16)]
 
+    j = 0
     while success_count < 1:
-        if isinstance(epoch_limit, int) and i > epoch_limit:
+        if isinstance(epoch_limit, int) and j > epoch_limit:
             return False, None, learn_indexes
-        # print(f'in local learning i({i}) <= ep_lim({epoch_limit})')
         answers, mistakes = test(net, test_sets)
-        epochs.append([i, net.weights.copy(), answers.copy(), mistakes])
+        epochs.append([j, net.weights.copy(), answers.copy(), mistakes])
         success_count += 1 if mistakes == 0 else 0
         net.learn_epoch(learn_sets)
-        i += 1
+        j += 1
     return True, epochs, learn_indexes
 
 

@@ -30,7 +30,10 @@ def find_base_set(epoch_limit: int,
     nss = NetSetSet()
     for ps in possible_sets.sets:
         n = Net(weights_num=ARG_NUM + 1, norm=norm, af=af, af_der=af_der)
-        status, *_ = learn(n, INPUTS, set(ps), epoch_limit=epoch_limit)
+        status, *_ = learn(n,
+                           INPUTS,
+                           set(ps),
+                           epoch_limit=epoch_limit)
         if status:
             if aim_set_len == cur_set_len:
                 nss.add_set(ps)

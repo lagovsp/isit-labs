@@ -3,29 +3,29 @@ from typing import Callable
 from datetime import datetime
 from itertools import product
 from texttable import Texttable
-from enum import Enum
+import matplotlib.pyplot as plt
 
 
 class Net:
     def __init__(self,
                  weights_num: int = None,
                  norm: float = None,
-                 af: Callable[[float], int] = None,
-                 af_der: Callable[[float], float] = None,
+                 tf: Callable[[float], int] = None,
+                 tf_der: Callable[[float], float] = None,
                  name: str = None):
         self.weights: list[float] = [0] * weights_num
         self.norm = norm
-        self.af = af
-        self.af_der = af_der
+        self.tf = tf
+        self.tf_der = tf_der
         self.name = name
 
     def predict(self, args: list[int]) -> (int, float):
         net = sum([args[i] * w for i, w in enumerate(self.weights)])
-        return self.af(net), net
+        return self.tf(net), net
 
     def _correct_weights(self, net: float, delta: int, sample: list[int]):
         for i, w in enumerate(self.weights):
-            self.weights[i] += self.norm * delta * self.af_der(net) * sample[i]
+            self.weights[i] += self.norm * delta * self.tf_der(net) * sample[i]
 
     def learn_epoch(self, samples: list[list[int]]):
         for i, sample in enumerate(samples):
@@ -103,11 +103,11 @@ INPUTS = list(map(append_left_true,
                            list(map(list,
                                     list(product([0, 1], repeat=ARG_NUM))))))))
 
-threshold_af_out: Callable[[float], int] = lambda net: 1 if net >= 0 else 0
-threshold_af_der: Callable[[float], float] = lambda net: 1
+threshold_tf_out: Callable[[float], int] = lambda net: 1 if net >= 0 else 0
+threshold_tf_der: Callable[[float], float] = lambda net: 1
 
-logistic_af_out: Callable[[float], int] = lambda net: 1 if (math.tanh(net) + 1) / 2 >= 0.5 else 0
-logistic_af_der: Callable[[float], float] = lambda net: 1 / (2 * (math.cosh(net) ** 2))
+logistic_tf_out: Callable[[float], int] = lambda net: 1 if (math.tanh(net) + 1) / 2 >= 0.5 else 0
+logistic_tf_der: Callable[[float], float] = lambda net: 1 / (2 * (math.cosh(net) ** 2))
 
 
 def display_net(logs: list[list],

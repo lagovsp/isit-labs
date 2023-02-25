@@ -24,8 +24,8 @@ th_f_der: Callable[[float], float] = lambda net: 1
 threshold_tf = TF(th_f, th_f_der, 0)
 
 sig_f: Callable[[float], float] = lambda net: (math.tanh(net) + 1) / 2
-sig_d_der: Callable[[float], float] = lambda net: sig_f(net) * (1 - sig_f(net))
-sigmoid_tf = TF(sig_f, sig_d_der, 0.5)
+sig_f_der: Callable[[float], float] = lambda net: sig_f(net) * (1 - sig_f(net))
+sigmoid_tf = TF(sig_f, sig_f_der, 0.5)
 
 
 class Net:
@@ -43,8 +43,8 @@ class Net:
         net = sum([args[i] * w for i, w in enumerate(self.weights)])
         return *self.tf.y(net), net
 
-    def _correct_weights(self, net: float, delta: int, xs: list[int]):
-        for i in range(len(self.weights)):
+    def _correct_weights(self, net: float, delta: float, xs: list[int]):
+        for i, _ in enumerate(self.weights):
             self.weights[i] += self.norm * delta * self.tf.f_der(net) * xs[i]
 
     def learn_epoch(self, xs_sets: list[list[int]]):

@@ -43,18 +43,17 @@ class Net:
         net = sum([args[i] * w for i, w in enumerate(self.weights)])
         return *self.tf.y(net), net
 
-    def _correct_weights(self, net: float, delta: float, xs: list[int]):
+    def _correct_weights(self, net: float, delta: int, xs: list[int]):
         for i in range(len(self.weights)):
-            self.weights[i] += self.norm * delta * self.tf.f_der(net) * int(xs[i])
+            self.weights[i] += self.norm * delta * self.tf.f_der(net) * xs[i]
 
     def learn_epoch(self, xs_sets: list[list[int]]):
         for xs in xs_sets:
             y, out, net = self.predict(xs[:-1])
-            print(y, out, net)
             self._correct_weights(net, xs[-1] - y, xs)
 
 
-def test(net: Net, xs_sets: list[list[int]]) -> (list[int], int):
+def test_sets(net: Net, xs_sets: list[list[int]]) -> (list[int], int):
     answers, mistakes = list(), 0
     for xs in xs_sets:
         net_ans, *_ = net.predict(xs[:-1])
@@ -72,10 +71,8 @@ def learn(net: Net,
 
     j = 0
     while True:
-        answers, mistakes = test(net, sets)
+        answers, mistakes = test_sets(net, sets)
         epochs.append([j, net.weights.copy(), answers.copy(), mistakes])
-        print(f'EPOCH {j}')
-        print(epochs[-1])
         if mistakes == 0:
             return True, epochs
         if epoch_limit is not None and j > epoch_limit:
@@ -156,6 +153,9 @@ def truthtable(f: Callable[[list[int]], bool], n: int) -> str:
                     list(map(list,
                              list(product([0, 1], repeat=n))))))
     args.insert(0, [f'x{i}' for i in range(1, n + 1)] + ['f'])
+    args[0].insert(0, 'n')
+    for i in range(2 ** n):
+        args[i + 1].insert(0, i)
 
     t = Texttable()
     t.set_chars(['—', '|', '+', '—'])

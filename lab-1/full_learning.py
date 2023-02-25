@@ -1,53 +1,47 @@
 import matplotlib.pyplot as plt
-
 from single_layer_net import *
 
 
 def main():
-    time = custom_time_str()
-
-    with open(f'tt-v{VAR}.dat', 'w') as logger:
+    with open(f'truthtable-v{VAR}.dat', 'w') as logger:
         logger.write(truthtable(bf, ARG_NUM))
 
     plt.title('Full learning')
     plt.xlabel('Epochs')
     plt.ylabel('Errors, E')
 
+    learn_indexes = set(range(len(INPUTS)))
+
     # Full Threshold
     net_threshold_all = Net(weights_num=ARG_NUM + 1,
                             norm=0.3,
-                            tf=threshold_tf_out,
-                            tf_der=threshold_tf_der,
+                            tf=threshold_tf,
                             name=f'th-fl-v{VAR}')
-    status_th, logs_th, learn_indexes_th = learn(net_threshold_all,
-                                                 INPUTS,
-                                                 set(range(len(INPUTS))))
+    status_th, logs_th = learn(net_threshold_all, INPUTS, learn_indexes)
     display_net(logs_th,
-                learn_indexes_th,
+                learn_indexes,
                 to_file=True,
-                file_name=f'{net_threshold_all.name}-{time}')
+                file_name=f'{net_threshold_all.name}')
     plt.plot(list(range(len(logs_th[1:]))), [log[3] for log in logs_th[1:]],
              label='Threshold-TF',
              marker='^')
 
-    # Full Logistic
-    net_logistic_all = Net(weights_num=ARG_NUM + 1,
-                           norm=0.3,
-                           tf=logistic_tf_out,
-                           tf_der=logistic_tf_der,
-                           name=f'l-fl-v{VAR}')
-    status_l, logs_l, learn_indexes_l = learn(net_logistic_all,
-                                              INPUTS,
-                                              set(range(len(INPUTS))))
-    display_net(logs_l,
-                learn_indexes_l,
+    # Full Sigmoid
+    net_sig_all = Net(weights_num=ARG_NUM + 1,
+                      norm=0.3,
+                      tf=sigmoid_tf,
+                      name=f'sig-fl-v{VAR}')
+    status_s, logs_s = learn(net_sig_all, INPUTS, learn_indexes)
+    display_net(logs_s,
+                learn_indexes,
                 to_file=True,
-                file_name=f'{net_logistic_all.name}-{time}')
-    plt.plot(list(range(len(logs_l[1:]))), [log[3] for log in logs_l[1:]],
-             label='Logistic-TF',
+                file_name=f'{net_sig_all.name}')
+    plt.plot(list(range(len(logs_s[1:]))), [log[3] for log in logs_s[1:]],
+             label='Sigmoid-TF',
              marker='o')
+
     plt.legend()
-    plt.show()
+    plt.gcf().savefig(f'fl-errors-v{VAR}.png', dpi=500)
 
 
 if __name__ == '__main__':

@@ -3,67 +3,88 @@ from typing import Callable
 from datetime import datetime
 from itertools import product
 from texttable import Texttable
-import matplotlib.pyplot as plt
+
+
+class TF:
+    def __init__(self,
+                 f: Callable[[float], float],
+                 f_der: Callable[[float], float],
+                 threshold_val: float):
+        self.f = f
+        self.f_der = f_der
+        self.y_threshold_val = threshold_val
+
+    def y(self, net: float) -> (int, float):
+        out = self.f(net)
+        return (1 if out >= self.y_threshold_val else 0), out
+
+
+th_f: Callable[[float], float] = lambda net: net
+th_f_der: Callable[[float], float] = lambda net: 1
+threshold_tf = TF(th_f, th_f_der, 0)
+
+sig_f: Callable[[float], float] = lambda net: (math.tanh(net) + 1) / 2
+sig_d_der: Callable[[float], float] = lambda net: sig_f(net) * (1 - sig_f(net))
+sigmoid_tf = TF(sig_f, sig_d_der, 0.5)
 
 
 class Net:
     def __init__(self,
-                 weights_num: int = None,
-                 norm: float = None,
-                 tf: Callable[[float], int] = None,
-                 tf_der: Callable[[float], float] = None,
+                 tf: TF,
+                 weights_num: int,
+                 norm: float,
                  name: str = None):
         self.weights: list[float] = [0] * weights_num
         self.norm = norm
         self.tf = tf
-        self.tf_der = tf_der
         self.name = name
 
-    def predict(self, args: list[int]) -> (int, float):
+    def predict(self, args: list[int]) -> (int, float, float):
         net = sum([args[i] * w for i, w in enumerate(self.weights)])
-        return self.tf(net), net
+        return *self.tf.y(net), net
 
-    def _correct_weights(self, net: float, delta: int, sample: list[int]):
-        for i, w in enumerate(self.weights):
-            self.weights[i] += self.norm * delta * self.tf_der(net) * sample[i]
+    def _correct_weights(self, net: float, delta: float, xs: list[int]):
+        for i in range(len(self.weights)):
+            self.weights[i] += self.norm * delta * self.tf.f_der(net) * int(xs[i])
 
-    def learn_epoch(self, samples: list[list[int]]):
-        for i, sample in enumerate(samples):
-            answer, net = self.predict(sample[:-1])
-            delta = sample[len(self.weights)] - answer
-            self._correct_weights(net, delta, sample)
+    def learn_epoch(self, xs_sets: list[list[int]]):
+        for xs in xs_sets:
+            y, out, net = self.predict(xs[:-1])
+            print(y, out, net)
+            self._correct_weights(net, xs[-1] - y, xs)
 
 
-def test(net: Net, sets: list[list[int]]) -> (list[int], int):
+def test(net: Net, xs_sets: list[list[int]]) -> (list[int], int):
     answers, mistakes = list(), 0
-    for s in sets:
-        net_ans, _ = net.predict(s[:-1])
+    for xs in xs_sets:
+        net_ans, *_ = net.predict(xs[:-1])
         answers.append(net_ans)
-        mistakes += 0 if net_ans == s[-1] else 1
+        mistakes += 0 if net_ans == xs[-1] else 1
     return answers, mistakes
 
 
 def learn(net: Net,
           sets: list[list[int]],
           learn_indexes: set[int],
-          epoch_limit=None) -> (bool, list[list], set[int]):
-    success_count, epochs = 0, list()
+          epoch_limit=None) -> (bool, list[list]):
+    epochs = list()
     learn_sets = [sets[i] for i in learn_indexes]
-    test_sets = [sets[i] for i in range(16)]
 
     j = 0
-    while success_count < 1:
-        if isinstance(epoch_limit, int) and j > epoch_limit:
-            return False, None, learn_indexes
-        answers, mistakes = test(net, test_sets)
+    while True:
+        answers, mistakes = test(net, sets)
         epochs.append([j, net.weights.copy(), answers.copy(), mistakes])
-        success_count += 1 if mistakes == 0 else 0
-        net.learn_epoch(learn_sets)
+        print(f'EPOCH {j}')
+        print(epochs[-1])
+        if mistakes == 0:
+            return True, epochs
+        if epoch_limit is not None and j > epoch_limit:
+            return False, None
         j += 1
-    return True, epochs, learn_indexes
+        net.learn_epoch(learn_sets)
 
 
-def get_append_bf_val_fun(f: Callable[[list[int]], bool]) -> Callable[[list[int]], list[int]]:
+def get_append_bf_val_fun(f: Callable[[list[int]], int]) -> Callable[[list[int]], list[int]]:
     def _append_bf_val(args: list[int]) -> list[int]:
         args.append(1 if f(args) else 0)
         return args
@@ -94,20 +115,17 @@ def custom_time_str() -> str:
 
 VAR = 6
 ARG_NUM = 4
-PARTIAL_BASE_LEN = 5
 
-bf: Callable[[list[int]], bool] = lambda args: (args[2] and args[3]) or (not args[0]) or (not args[1])
+
+def bf(args: list[int]) -> bool:
+    args = list(map(lambda x: False if x == 0 else True, args))
+    return (args[2] and args[3]) or (not args[0]) or (not args[1])
+
 
 INPUTS = list(map(append_left_true,
                   list(map(get_append_bf_val_fun(bf),
                            list(map(list,
                                     list(product([0, 1], repeat=ARG_NUM))))))))
-
-threshold_tf_out: Callable[[float], int] = lambda net: 1 if net >= 0 else 0
-threshold_tf_der: Callable[[float], float] = lambda net: 1
-
-logistic_tf_out: Callable[[float], int] = lambda net: 1 if (math.tanh(net) + 1) / 2 >= 0.5 else 0
-logistic_tf_der: Callable[[float], float] = lambda net: 1 / (2 * (math.cosh(net) ** 2))
 
 
 def display_net(logs: list[list],
@@ -129,7 +147,7 @@ def display_net(logs: list[list],
     with open(f'{file_name}.log', 'w') as logger:
         logger.write(f'Net learned from sets {train_set}\n')
         for i in train_set:
-            logger.write(f'{i} —> {INPUTS[i][1:-1]}\n')
+            logger.write(f'{i}\t—> {INPUTS[i][1:-1]}\n')
         logger.write(t.draw())
 
 

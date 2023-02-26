@@ -9,14 +9,17 @@ class TF:
     def __init__(self,
                  f: Callable[[float], float],
                  f_der: Callable[[float], float],
-                 threshold_val: float):
+                 threshold_val: float,
+                 e=10):
         self.f = f
         self.f_der = f_der
         self.y_threshold_val = threshold_val
+        self.e = e
 
     def y(self, net: float) -> (int, float):
         out = self.f(net)
-        return (1 if out >= self.y_threshold_val else 0), out
+        y = 1 if out - self.y_threshold_val >= 0 else 0
+        return y, out
 
 
 th_f: Callable[[float], float] = lambda net: net
@@ -41,15 +44,22 @@ class Net:
 
     def predict(self, args: list[int]) -> (int, float, float):
         net = sum([args[i] * w for i, w in enumerate(self.weights)])
+        if -self.norm / 2 < net < self.norm / 2:
+            net = 0
+        print(f'predicted net = {net}\t', end='')
         return *self.tf.y(net), net
 
-    def _correct_weights(self, net: float, delta: float, xs: list[int]):
+    def _correct_weights(self, net: float, delta: int, xs: list[int]):
         for i, _ in enumerate(self.weights):
-            self.weights[i] += self.norm * delta * self.tf.f_der(net) * xs[i]
+            diff = round(self.norm * delta * self.tf.f_der(net) * xs[i], self.tf.e)
+            print(f'\tw{i} = {self.weights[i]}\tdelta = {delta}, dW = {diff}', end='')
+            self.weights[i] = round(self.weights[i] + diff, self.tf.e)
+            print(f'\tw{i} = {self.weights[i]}')
 
     def learn_epoch(self, xs_sets: list[list[int]]):
         for xs in xs_sets:
             y, out, net = self.predict(xs[:-1])
+            print(f'{xs[1:-1]}\t-> y = {y}, out = {out}, net = {net}')
             self._correct_weights(net, xs[-1] - y, xs)
 
 
@@ -78,7 +88,11 @@ def learn(net: Net,
         if epoch_limit is not None and j > epoch_limit:
             return False, None
         j += 1
+        if j == 14:
+            print(f'EPOCH {j} BEG ------------------------------------------------------------')
         net.learn_epoch(learn_sets)
+        if j == 14:
+            print(f'EPOCH {j} FIN ------------------------------------------------------------')
 
 
 def get_append_bf_val_fun(f: Callable[[list[int]], int]) -> Callable[[list[int]], list[int]]:

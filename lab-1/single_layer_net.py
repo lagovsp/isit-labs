@@ -22,13 +22,18 @@ class TF:
         return y, out
 
 
-th_f: Callable[[float], float] = lambda net: net
-th_f_der: Callable[[float], float] = lambda net: 1
-threshold_tf = TF(th_f, th_f_der, 0)
+_th_f: Callable[[float], float] = lambda net: net
+_th_f_der: Callable[[float], float] = lambda net: 1
+THRESHOLD_TF = TF(_th_f, _th_f_der, 0)
 
-sig_f: Callable[[float], float] = lambda net: (math.tanh(net) + 1) / 2
-sig_f_der: Callable[[float], float] = lambda net: sig_f(net) * (1 - sig_f(net))
-sigmoid_tf = TF(sig_f, sig_f_der, 0.5)
+_sig_f: Callable[[float], float] = lambda net: (math.tanh(net) + 1) / 2
+_sig_f_der: Callable[[float], float] = lambda net: _sig_f(net) * (1 - _sig_f(net))
+SIGMOID_TF = TF(_sig_f, _sig_f_der, 0.5)
+
+TF_TYPES = {
+    0: ('TH', THRESHOLD_TF),
+    1: ('SIG', SIGMOID_TF),
+}
 
 
 class Net:
@@ -43,23 +48,22 @@ class Net:
         self.name = name
 
     def predict(self, args: list[int]) -> (int, float, float):
-        net = sum([args[i] * w for i, w in enumerate(self.weights)])
-        if -self.norm / 2 < net < self.norm / 2:
-            net = 0
-        print(f'predicted net = {net}\t', end='')
+        net = sum([norm_counter * args[i] for i, norm_counter in enumerate(self.weights)]) * self.norm
         return *self.tf.y(net), net
 
     def _correct_weights(self, net: float, delta: int, xs: list[int]):
         for i, _ in enumerate(self.weights):
-            diff = round(self.norm * delta * self.tf.f_der(net) * xs[i], self.tf.e)
-            print(f'\tw{i} = {self.weights[i]}\tdelta = {delta}, dW = {diff}', end='')
-            self.weights[i] = round(self.weights[i] + diff, self.tf.e)
-            print(f'\tw{i} = {self.weights[i]}')
+            diff_norm_counter = delta * self.tf.f_der(net) * xs[i]
+            # print(f'\tw{i} = {round(self.weights[i] * self.norm, 3)}\tdelta = {diff_norm_counter}',
+            #       end=' -> ')
+            self.weights[i] += diff_norm_counter
+            # print(f'w{i} = {round(self.weights[i] * self.norm, 3)}')
 
     def learn_epoch(self, xs_sets: list[list[int]]):
-        for xs in xs_sets:
+        for i, xs in enumerate(xs_sets):
             y, out, net = self.predict(xs[:-1])
-            print(f'{xs[1:-1]}\t-> y = {y}, out = {out}, net = {net}')
+            # print(
+            #     f'n{i} - {xs[0]} [{"".join(map(str, xs[1:-1]))}] > {xs[-1]}\t-> y = {y}, out = {round(out, 3)}, net = {round(net, 3)}')
             self._correct_weights(net, xs[-1] - y, xs)
 
 
@@ -79,20 +83,21 @@ def learn(net: Net,
     epochs = list()
     learn_sets = [sets[i] for i in learn_indexes]
 
-    j = 0
+    j = 1
     while True:
+        # if j == 14:
+        #     print(f'EPOCH {j} BEG ------------------------------------------------------------')
+        net.learn_epoch(learn_sets)
+        # if j == 14:
+        #     print(f'EPOCH {j} FIN ------------------------------------------------------------')
         answers, mistakes = test_sets(net, sets)
-        epochs.append([j, net.weights.copy(), answers.copy(), mistakes])
+        epochs.append([j, list(map(lambda x: x * 0.3, net.weights.copy())), answers.copy(), mistakes])
+        # print(epochs[-1])
         if mistakes == 0:
             return True, epochs
         if epoch_limit is not None and j > epoch_limit:
             return False, None
         j += 1
-        if j == 14:
-            print(f'EPOCH {j} BEG ------------------------------------------------------------')
-        net.learn_epoch(learn_sets)
-        if j == 14:
-            print(f'EPOCH {j} FIN ------------------------------------------------------------')
 
 
 def get_append_bf_val_fun(f: Callable[[list[int]], int]) -> Callable[[list[int]], list[int]]:
@@ -156,7 +161,7 @@ def display_net(logs: list[list],
         print(t.draw())
         return
     with open(f'{file_name}.log', 'w') as logger:
-        logger.write(f'Net learned from sets {train_set}\n')
+        logger.write(F'NET LEARNED FROM SETS {train_set}\n')
         for i in train_set:
             logger.write(f'{i}\t—> {INPUTS[i][1:-1]}\n')
         logger.write(t.draw())

@@ -26,18 +26,18 @@ def find_base_sets(epoch_limit: int,
                    norm: float,
                    tf: TF,
                    cur_set_len: int,
-                   possible_sets: NetSetSet = None) -> (bool, NetSetSet):
+                   possible_sets: NetSetSet) -> (bool, NetSetSet):
     nss = NetSetSet()
     while True:
         print(f'NOW CHECK LEN {cur_set_len}')
-        for ps in possible_sets.dicts:
+        for ps in possible_sets.dicts.copy():
             n = Net(weights_num=ARG_NUM + 1, norm=norm, tf=tf)
             status, history = learn(n,
                                     INPUTS,
                                     set(ps),
                                     epoch_limit=epoch_limit)
             if not status:
-                possible_sets.dicts.update({ps: None})
+                possible_sets.dicts.pop(ps)
                 continue
             possible_sets.dicts.update({ps: len(history)})
             for item in list(itertools.combinations(ps, cur_set_len - 1)):
@@ -59,33 +59,34 @@ def main():
     plt.ylabel('Errors, E')
 
     # Partial Threshold
-    # nss_th = NetSetSet({tuple(range(2 ** ARG_NUM)): None})
-    # status_th, base_sets_th = find_base_sets(epoch_limit=200,
-    #                                          norm=0.3,
-    #                                          tf=threshold_tf,
-    #                                          cur_set_len=2 ** ARG_NUM,
-    #                                          possible_sets=nss_th)
-    # s, eps = base_sets_th.dicts.popitem()
-    # s = set(s)
-    # print(f'These len-{len(s)} sets can be used (TH):')
-    # print(base_sets_th)
+    nss_th = NetSetSet({tuple(range(2 ** ARG_NUM)): None})
+    status_th, base_sets_th = find_base_sets(epoch_limit=200,
+                                             norm=0.3,
+                                             tf=THRESHOLD_TF,
+                                             cur_set_len=2 ** ARG_NUM,
+                                             possible_sets=nss_th)
+    s, eps = base_sets_th.dicts.popitem()
+    s = set(s)
+    print(f'These len-{len(s)} sets can be used (TH):')
+    base_sets_th.add_set(s, eps)
+    print(base_sets_th)
     # mine = {4, 8, 13, 14, 15}
     # mine = {6, 9, 13, 14}
-    # net_threshold = Net(weights_num=ARG_NUM + 1,
-    #                     norm=0.3,
-    #                     tf=threshold_tf,
-    #                     name=f'th-pl-v{VAR}')
-    # status_th, logs_th, learn_indexes_th = learn(net_threshold,
-    #                                              INPUTS,
-    #                                              s)
+    net_threshold = Net(weights_num=ARG_NUM + 1,
+                        norm=0.3,
+                        tf=THRESHOLD_TF,
+                        name=f'th-pl-v{VAR}')
+    status_th, logs_th, learn_indexes_th = learn(net_threshold,
+                                                 INPUTS,
+                                                 s)
     # {6, 9, 13, 14})
-    # display_net(logs_th,
-    #             learn_indexes_th,
-    #             to_file=True,
-    #             file_name=f'{net_threshold.name}')
-    # plt.plot(list(range(len(logs_th[1:]))), [log[3] for log in logs_th[1:]],
-    #          label='Threshold-TF',
-    #          marker='^')
+    display_net(logs_th,
+                learn_indexes_th,
+                to_file=True,
+                file_name=f'{net_threshold.name}')
+    plt.plot(list(range(len(logs_th[1:]))), [log[3] for log in logs_th[1:]],
+             label='Threshold-TF',
+             marker='^')
 
     # Partial Sigmoid
     # nss_l = NetSetSet([set(range(2 ** ARG_NUM))])
@@ -99,7 +100,7 @@ def main():
     sig_mine = {4, 8, 13, 14, 15}
     net_logistic = Net(weights_num=ARG_NUM + 1,
                        norm=0.3,
-                       tf=sigmoid_tf,
+                       tf=SIGMOID_TF,
                        name=f'sig-pl-v{VAR}')
     # _, train_set_l = base_sets_sig.pop()
     status_l, logs_l = learn(net_logistic,

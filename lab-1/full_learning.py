@@ -15,7 +15,7 @@ def main():
     # Full Threshold
     net_threshold_all = Net(weights_num=ARG_NUM + 1,
                             norm=0.3,
-                            tf=threshold_tf,
+                            tf=THRESHOLD_TF,
                             name=f'th-fl-v{VAR}')
     status_th, logs_th = learn(net_threshold_all, INPUTS, learn_indexes)
     display_net(logs_th,
@@ -29,16 +29,16 @@ def main():
     # Full Sigmoid
     net_sig_all = Net(weights_num=ARG_NUM + 1,
                       norm=0.3,
-                      tf=sigmoid_tf,
+                      tf=SIGMOID_TF,
                       name=f'sig-fl-v{VAR}')
-    # status_s, logs_s = learn(net_sig_all, INPUTS, learn_indexes)
-    # display_net(logs_s,
-    #             learn_indexes,
-    #             to_file=True,
-    #             file_name=f'{net_sig_all.name}')
-    # plt.plot(list(range(len(logs_s[1:]))), [log[3] for log in logs_s[1:]],
-    #          label='Sigmoid-TF',
-    #          marker='o')
+    status_s, logs_s = learn(net_sig_all, INPUTS, learn_indexes)
+    display_net(logs_s,
+                learn_indexes,
+                to_file=True,
+                file_name=f'{net_sig_all.name}')
+    plt.plot(list(range(len(logs_s[1:]))), [log[3] for log in logs_s[1:]],
+             label='Sigmoid-TF',
+             marker='o')
 
     plt.legend()
     plt.gcf().savefig(f'fl-errors-v{VAR}.png', dpi=500)

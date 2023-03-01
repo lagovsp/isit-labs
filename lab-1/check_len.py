@@ -33,7 +33,7 @@ def check_sets_of_length(set_len: int,
 
 
 def main():
-    tf_type = int(sys.argv[1])  # types = {th, sig}
+    tf_type = int(sys.argv[1])  # types = {0, 1}
     ep_limit = sys.argv[2]  # recommended > 30
     norm = float(sys.argv[3])  # 0 < norm <= 1
     set_len = sys.argv[4]  # 0 < set_len < len(INPUTS)

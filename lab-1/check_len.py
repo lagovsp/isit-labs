@@ -20,41 +20,37 @@ def check_sets_of_length(set_len: int,
                                 INPUTS,
                                 set(s),
                                 epoch_limit=epoch_limit)
-        print(s, end=' ')
-        if status:
-            print(Fore.GREEN + F'PASSED' + Fore.RESET + F' {len(history)} EPS')
-        else:
-            print(Fore.RED + F'FAILED' + Fore.RESET)
-
+        print(s, ((Fore.GREEN + F'PASSED') if status else (Fore.RED + F'FAILED\n')) + Fore.RESET, end='')
         if not status:
             continue
+        print(F' {len(history)} EPS')
+
         found_sets.update({tuple(sorted(s)): len(history)})
     return found_sets
 
 
 def main():
-    tf_type = int(sys.argv[1])  # types = {0, 1}
-    ep_limit = sys.argv[2]  # recommended > 30
+    tf_type = sys.argv[1].upper()  # types = {'TH', 'SIG'}
+    ep_limit = int(sys.argv[2])  # recommended > 30
     norm = float(sys.argv[3])  # 0 < norm <= 1
-    set_len = sys.argv[4]  # 0 < set_len < len(INPUTS)
+    set_len = int(sys.argv[4])  # 0 < set_len < len(INPUTS)
 
-    if tf_type not in TF_TYPES:
+    tf = TF_TYPES.get(tf_type)
+    if tf is None:
         raise Exception('UNKNOWN TF TYPE')
-    print(F'TF TYPE: {TF_TYPES.get(tf_type)[0]}')
+    print(F'TF TYPE: {tf_type}')
 
     if not 0 < norm <= 1:
         raise Exception(F'BAD NORM GIVEN ({norm})')
     print(F'NORM: {norm}')
 
     print(F'CHECKING LEN-{set_len} SETS . . .')
-    sets = check_sets_of_length(int(set_len),
-                                int(ep_limit),
-                                float(norm),
-                                TF_TYPES.get(tf_type)[1])
+    sets = check_sets_of_length(set_len, ep_limit, norm, tf)
 
     if not sets:
         print('NO SETS FOUND')
         return
+
     print(f'FOUND SETS: {len(sets)}')
     print('\n'.join(map(str, sets.items())))
 

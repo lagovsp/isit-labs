@@ -9,12 +9,10 @@ class TF:
     def __init__(self,
                  f: Callable[[float], float],
                  f_der: Callable[[float], float],
-                 threshold_val: float,
-                 e=10):
+                 threshold_val: float):
         self.f = f
         self.f_der = f_der
         self.y_threshold_val = threshold_val
-        self.e = e
 
     def y(self, net: float) -> (int, float):
         out = self.f(net)
@@ -27,12 +25,12 @@ _th_f_der: Callable[[float], float] = lambda net: 1
 THRESHOLD_TF = TF(_th_f, _th_f_der, 0)
 
 _sig_f: Callable[[float], float] = lambda net: (math.tanh(net) + 1) / 2
-_sig_f_der: Callable[[float], float] = lambda net: _sig_f(net) * (1 - _sig_f(net))
+_sig_f_der: Callable[[float], float] = lambda net: 1 / (2 * (math.cosh(net) ** 2))
 SIGMOID_TF = TF(_sig_f, _sig_f_der, 0.5)
 
 TF_TYPES = {
-    0: ('TH', THRESHOLD_TF),
-    1: ('SIG', SIGMOID_TF),
+    'TH': THRESHOLD_TF,
+    'SIG': SIGMOID_TF,
 }
 
 
@@ -53,17 +51,11 @@ class Net:
 
     def _correct_weights(self, net: float, delta: int, xs: list[int]):
         for i, _ in enumerate(self.weights):
-            diff_norm_counter = delta * self.tf.f_der(net) * xs[i]
-            # print(f'\tw{i} = {round(self.weights[i] * self.norm, 3)}\tdelta = {diff_norm_counter}',
-            #       end=' -> ')
-            self.weights[i] += diff_norm_counter
-            # print(f'w{i} = {round(self.weights[i] * self.norm, 3)}')
+            self.weights[i] += delta * self.tf.f_der(net) * xs[i]
 
     def learn_epoch(self, xs_sets: list[list[int]]):
         for i, xs in enumerate(xs_sets):
             y, out, net = self.predict(xs[:-1])
-            # print(
-            #     f'n{i} - {xs[0]} [{"".join(map(str, xs[1:-1]))}] > {xs[-1]}\t-> y = {y}, out = {round(out, 3)}, net = {round(net, 3)}')
             self._correct_weights(net, xs[-1] - y, xs)
 
 
@@ -85,14 +77,9 @@ def learn(net: Net,
 
     j = 1
     while True:
-        # if j == 14:
-        #     print(f'EPOCH {j} BEG ------------------------------------------------------------')
         net.learn_epoch(learn_sets)
-        # if j == 14:
-        #     print(f'EPOCH {j} FIN ------------------------------------------------------------')
         answers, mistakes = test_sets(net, sets)
         epochs.append([j, list(map(lambda x: x * 0.3, net.weights.copy())), answers.copy(), mistakes])
-        # print(epochs[-1])
         if mistakes == 0:
             return True, epochs
         if epoch_limit is not None and j > epoch_limit:

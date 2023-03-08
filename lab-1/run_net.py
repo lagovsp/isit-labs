@@ -30,7 +30,7 @@ def main():
         print(F'NET CANNOT BE LEARNED WITHIN {ep_limit} EPOCHS ON SETS {sets}')
         return
 
-    display_net(logs, sets, to_file=True, file_name=F'{net.name}-{tf_type}')
+    display_net(INPUTS, logs, sets, to_file=True, file_name=F'{net.name}-{tf_type}')
 
     plt.title(F'{name} {tf_type} {norm} {tuple(sorted(sets))}')
     plt.xlabel('Epochs')

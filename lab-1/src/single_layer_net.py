@@ -64,7 +64,7 @@ def learn(net: Net,
     while True:
         net.learn_epoch(learn_sets)
         answers, mistakes = test_sets(net, sets)
-        epochs.append([j, list(map(lambda x: x * 0.3, net.weights.copy())), answers.copy(), mistakes])
+        epochs.append([j, list(map(lambda x: x * net.norm, net.weights.copy())), answers.copy(), mistakes])
         if mistakes == 0:
             return True, epochs
         if epoch_limit is not None and j > epoch_limit:

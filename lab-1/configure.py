@@ -56,13 +56,19 @@ def bf(args: list[int]) -> bool:
     return (args[2] and args[3]) or (not args[0]) or (not args[1])
 
 
+def create_sets_from_args_num(args: int) -> list[list[int]]:
+    return list(map(list,
+                    list(product([0, 1], repeat=args))))
+
+
 INPUTS = list(map(append_left_true,
                   list(map(get_append_bf_val_fun(bf),
                            list(map(list,
                                     list(product([0, 1], repeat=ARG_NUM))))))))
 
 
-def display_net(logs: list[list],
+def display_net(inputs: list[list[int]],
+                logs: list[list],
                 train_set: set[int],
                 to_file: bool = False,
                 file_name: str = f'net-{custom_time_str()}') -> None:
@@ -81,7 +87,7 @@ def display_net(logs: list[list],
     with open(f'{file_name}.log', 'w') as logger:
         logger.write(F'NET LEARNED FROM SETS {train_set}\n')
         for i in train_set:
-            logger.write(f'{i}\t—> {INPUTS[i][1:-1]}\n')
+            logger.write(f'{i}\t—> {inputs[i][1:-1]}\n')
         logger.write(t.draw())
 
 

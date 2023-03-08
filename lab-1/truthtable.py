@@ -1,4 +1,4 @@
-from single_layer_net import *
+from configure import *
 
 
 def main():

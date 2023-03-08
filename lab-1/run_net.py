@@ -1,7 +1,8 @@
 import sys
 
-from single_layer_net import *
+from src.single_layer_net import *
 import matplotlib.pyplot as plt
+from configure import *
 
 
 def main():
@@ -12,12 +13,10 @@ def main():
     sets = set(map(int, sys.argv[5:]))  # specify the learning sets, all used if empty
 
     tf = TF_TYPES.get(tf_type)
-    if tf is None:
-        raise Exception('UNKNOWN TF TYPE')
+    assert tf is not None
     print(F'TF TYPE: {tf_type}')
 
-    if not 0 < norm <= 1:
-        raise Exception(F'BAD NORM GIVEN ({norm})')
+    assert 0 < norm <= 1
     print(F'NORM: {norm}')
 
     if not sets:

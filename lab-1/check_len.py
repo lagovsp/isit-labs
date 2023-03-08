@@ -1,8 +1,9 @@
 import sys
 
-from single_layer_net import *
+from src.single_layer_net import *
 import itertools
 from colorama import Fore
+from configure import *
 
 
 def check_sets_of_length(set_len: int,

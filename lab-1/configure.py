@@ -53,7 +53,9 @@ def append_left_true(args: list[int]) -> list[int]:
 
 def bf(args: list[int]) -> bool:
     args = list(map(lambda x: False if x == 0 else True, args))
-    return (args[2] and args[3]) or (not args[0]) or (not args[1])
+    # return (not ((args[0]) and (args[1]))) and args[2] and args[3] # Enya
+    # return (args[0] or args[1] or args[3]) and args[2]  # Roman
+    return (args[2] and args[3]) or (not args[0]) or (not args[1])  # Sergey
 
 
 def create_sets_from_args_num(args: int) -> list[list[int]]:
@@ -87,7 +89,7 @@ def display_net(inputs: list[list[int]],
     with open(f'{file_name}.log', 'w') as logger:
         logger.write(F'NET LEARNED FROM SETS {train_set}\n')
         for i in train_set:
-            logger.write(f'{i}\t—> {inputs[i][1:-1]}\n')
+            logger.write(f'{i}\t—> {inputs[i]}\n')
         logger.write(t.draw())
 
 

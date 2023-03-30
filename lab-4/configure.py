@@ -2,7 +2,7 @@ from typing import Callable
 from itertools import product
 from texttable import Texttable
 from datetime import datetime
-from src.single_layer_net import TF
+from rbf_net import TF
 import math
 
 VAR = 0

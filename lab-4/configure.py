@@ -12,15 +12,6 @@ _th_f: Callable[[float], float] = lambda net: net
 _th_f_der: Callable[[float], float] = lambda net: 1
 THRESHOLD_TF = TF(_th_f, _th_f_der, 0)
 
-_sig_f: Callable[[float], float] = lambda net: (math.tanh(net) + 1) / 2
-_sig_f_der: Callable[[float], float] = lambda net: 1 / (2 * (math.cosh(net) ** 2))
-SIGMOID_TF = TF(_sig_f, _sig_f_der, 0.5)
-
-TF_TYPES = {
-    'TH': THRESHOLD_TF,
-    'SIG': SIGMOID_TF,
-}
-
 
 def modify_lists(logs_list: list[list]) -> list[list]:
     for i, log in enumerate(logs_list):

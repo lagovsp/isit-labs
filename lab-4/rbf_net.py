@@ -28,7 +28,6 @@ class RBFNet:
             return f'RBF{self.num}{self.center_coords}'
 
         def compute_phi(self, s: list[int]) -> float:
-            assert len(s) == 4
             phi = 1 if self.is_one else math.exp(
                 -sum([(x_val - self.center_coords[i]) ** 2 for i, x_val in enumerate(s)]))
             return phi
@@ -99,7 +98,7 @@ def learn(net: RBFNet,
     j = 0
     while True:
         if epoch_limit is not None and j == epoch_limit:
-            return False, None
+            return False, epochs
         net.learn_epoch(learn_sets)
         j += 1
         answers, mistakes = test_sets(net, sets)

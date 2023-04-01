@@ -6,10 +6,15 @@ from configure import *
 
 
 def main():
-    ep_limit = int(sys.argv[1])  # recommended > 30
-    norm = float(sys.argv[2])  # 0 < norm <= 1
-    name = sys.argv[3]  # any string for table name
-    sets = set(map(int, sys.argv[4:]))  # specify the learning sets, all used if empty
+    tf_type = sys.argv[1].upper()  # types = {'TH', 'SIG'}
+    ep_limit = int(sys.argv[2])  # recommended > 30
+    norm = float(sys.argv[3])  # 0 < norm <= 1
+    name = sys.argv[4]  # any string for table name
+    sets = set(map(int, sys.argv[5:]))  # specify the learning sets, all used if empty
+
+    tf = TF_TYPES.get(tf_type)
+    assert tf is not None
+    print(F'TF TYPE: {tf_type}')
 
     assert 0 < norm <= 1
     print(F'NORM: {norm}')
@@ -21,12 +26,12 @@ def main():
         sets = set(range(len(INPUTS)))
     print(F'PROCESSING {sorted(sets)} . . .')
 
-    net = RBFNet(f_tf=THRESHOLD_TF, norm=norm, name=F'{name}')
+    net = RBFNet(f_tf=tf, norm=norm, name=F'{name}')
     status, logs = learn(net, INPUTS, sets, epoch_limit=ep_limit)
 
     display_net(INPUTS, logs, sets, to_file=True, file_name=F'{net.name}')
 
-    plt.title(F'{"SUCCESS" if status else "FAIL"} {name} {norm} {sorted(sets)}')
+    plt.title(F'{"SUC" if status else "FAIL"} {name} n = {norm} SETS {sorted(sets)}')
     plt.xlabel('Epochs, k')
     plt.ylabel('Errors, E')
 

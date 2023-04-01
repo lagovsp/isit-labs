@@ -1,3 +1,4 @@
+import math
 from typing import Callable
 from itertools import product
 from texttable import Texttable
@@ -10,6 +11,15 @@ ARG_NUM = 4
 _th_f: Callable[[float], float] = lambda net: net
 _th_f_der: Callable[[float], float] = lambda net: 1
 THRESHOLD_TF = TF(_th_f, _th_f_der, 0)
+
+_sig_f: Callable[[float], float] = lambda net: (math.tanh(net) + 1) / 2
+_sig_f_der: Callable[[float], float] = lambda net: 1 / (2 * (math.cosh(net) ** 2))
+SIGMOID_TF = TF(_sig_f, _sig_f_der, 0.5)
+
+TF_TYPES = {
+    'TH': THRESHOLD_TF,
+    'SIG': SIGMOID_TF,
+}
 
 
 def modify_lists(logs_list: list[list]) -> list[list]:
@@ -39,7 +49,6 @@ def append_bf_val(f: Callable[[list[int]], bool], args: list[int]) -> list[int]:
 def bf(args: list[int]) -> bool:
     args = list(map(lambda x: False if x == 0 else True, args))
     return (args[2] and args[3]) or (not args[0]) or (not args[1])  # Lagov
-    # return (not (args[0] and args[1])) and (args[2]) and (args[3])  # Demo-1
 
 
 def create_sets_from_args_num(args: int) -> list[list[int]]:
@@ -71,7 +80,7 @@ def display_net(inputs: list[list[int]],
         return
     with open(f'{file_name}.log', 'w') as logger:
         logger.write(F'NET LEARNED FROM SETS\n')
-        for i in train_set:
+        for i in sorted(train_set):
             logger.write(f'{i}\t—> {inputs[i]}\n')
         logger.write(t.draw())
 

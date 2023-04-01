@@ -13,42 +13,39 @@ class TF:
 
     def y(self, net: float) -> (int, float):
         out = self.f(net)
-        y = 1 if out - self.y_threshold_val >= 0 else 0
+        y = 1 if out >= self.y_threshold_val else 0
         return y, out
 
 
-class Net:
+class RBFNet:
     class RBFNeuron:
-        def __init__(self, coords: list[int], fictitious: bool):
-            self.is_fictitious = fictitious
-            self.center = coords
+        def __init__(self, cc: list[int], is_one: bool, num: int):
+            self.is_one = is_one
+            self.center_coords = cc
+            self.num = num
 
         def __repr__(self) -> str:
-            return f'RBF{self.center}'
+            return f'RBF{self.num}{self.center_coords}'
 
-        def compute_set(self, s: list[int]) -> float:
-            print(f'got s {s}, c {self.center}')
-            print(1 if self.is_fictitious else math.exp(
-                -sum([(x_val - self.center[i]) ** 2 for i, x_val in enumerate(s)])))
-            return 1 if self.is_fictitious else math.exp(
-                -sum([(x_val - self.center[i]) ** 2 for i, x_val in enumerate(s)]))
+        def compute_phi(self, s: list[int]) -> float:
+            assert len(s) == 4
+            phi = 1 if self.is_one else math.exp(
+                -sum([(x_val - self.center_coords[i]) ** 2 for i, x_val in enumerate(s)]))
+            return phi
 
     def __init__(self,
-                 tf: TF,
+                 f_tf: TF,
                  norm: float,
                  name: str = None):
         self.norm = norm
-        self.tf = tf
+        self.tf = f_tf
         self.name = name
-        self.rbf_neurons = list[Net.RBFNeuron]()
+        self.rbf_neurons = list[RBFNet.RBFNeuron]()
         self.vs = list[float]()
 
     def predict(self, args: list[int]) -> (int, float, float):  # y, out, net
-        # print(len(self.vs))
-        # print(len(self.rbf_neurons))
-        net = sum([self.vs[j] * rbf_n.compute_set(args[1:])
-                   for j, rbf_n in enumerate(self.rbf_neurons)])
-        net *= self.norm
+        net = sum([self.vs[j] * rbf_n.compute_phi(args)
+                   for j, rbf_n in enumerate(self.rbf_neurons)]) * self.norm
         return *self.tf.y(net), net
 
     def set_rbf_neurons(self, rbfs: list[RBFNeuron]) -> None:
@@ -60,17 +57,16 @@ class Net:
                          delta: int,
                          xs: list[int]) -> None:
         for i, _ in enumerate(self.vs):
-            self.vs[i] += delta * self.tf.f_der(net) * self.rbf_neurons[i].compute_set(xs[1:-1])
+            self.vs[i] += delta * self.tf.f_der(net) * self.rbf_neurons[i].compute_phi(xs[:-1])
 
     def learn_epoch(self, xs_sets: list[list[int]]) -> None:
         for i, xs in enumerate(xs_sets):
-            print(f'offer {xs[:-1]}')
             y, out, net = self.predict(xs[:-1])
             self._correct_weights(net, xs[-1] - y, xs)
 
 
-def test_sets(net: Net, xs_sets: list[list[int]]) -> (list[int], int):
-    answers, mistakes = list(), 0
+def test_sets(net: RBFNet, xs_sets: list[list[int]]) -> (list[int], int):
+    answers, mistakes = list[int](), 0
     for xs in xs_sets:
         net_ans, *_ = net.predict(xs[:-1])
         answers.append(net_ans)
@@ -78,7 +74,7 @@ def test_sets(net: Net, xs_sets: list[list[int]]) -> (list[int], int):
     return answers, mistakes
 
 
-def learn(net: Net,
+def learn(net: RBFNet,
           sets: list[list[int]],
           learn_indexes: set[int],
           epoch_limit=None) -> (bool, list[list]):
@@ -87,21 +83,19 @@ def learn(net: Net,
 
     # learning which are more:  0s or 1s ?
     ones = sum(map(lambda x: x[-1], sets), start=0)
-    centers_indexes_ones = set[int]()
+    centers = set[int]()
     for i, s in enumerate(sets):
         if not s[-1] == 1:
             continue
-        centers_indexes_ones.add(i)
+        centers.add(i)
 
     # setting RBF-neurons
     if not ones == len(sets) - ones:
         centers = {i for i in (
-            centers_indexes_ones if (ones < len(sets) - ones) else set(range(len(sets))) - centers_indexes_ones)}
-        net.set_rbf_neurons([Net.RBFNeuron(list(), True)] + [Net.RBFNeuron(sets[i][1:-1], False)
-                                                             for i in sorted(centers)])
+            centers if (ones < len(sets) - ones) else (set(range(len(sets))) - centers))}
 
-    print(net.rbf_neurons)
-
+    net.set_rbf_neurons([RBFNet.RBFNeuron(list(), True, 0)] + [RBFNet.RBFNeuron(sets[ci][:-1], False, i + 1)
+                                                               for i, ci in enumerate(sorted(centers))])
     j = 0
     while True:
         if epoch_limit is not None and j == epoch_limit:
@@ -110,6 +104,5 @@ def learn(net: Net,
         j += 1
         answers, mistakes = test_sets(net, sets)
         epochs.append([j, list(map(lambda x: x * net.norm, net.vs.copy())), answers.copy(), mistakes])
-        print(epochs[-1])
         if mistakes == 0:
             return True, epochs

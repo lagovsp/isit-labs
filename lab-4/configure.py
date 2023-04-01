@@ -3,9 +3,8 @@ from itertools import product
 from texttable import Texttable
 from datetime import datetime
 from rbf_net import TF
-import math
 
-VAR = 0
+VAR = 6
 ARG_NUM = 4
 
 _th_f: Callable[[float], float] = lambda net: net
@@ -37,17 +36,10 @@ def append_bf_val(f: Callable[[list[int]], bool], args: list[int]) -> list[int]:
     return args
 
 
-def append_left_true(args: list[int]) -> list[int]:
-    args.insert(0, 1)
-    return args
-
-
 def bf(args: list[int]) -> bool:
     args = list(map(lambda x: False if x == 0 else True, args))
-    # return (not ((args[0]) and (args[1]))) and args[2] and args[3] # Enya
-    # return (args[0] or args[1] or args[3]) and args[2]  # Roman
-    # return (args[2] and args[3]) or (not args[0]) or (not args[1])  # Sergey
-    return (not (args[0] and args[1])) and (args[2]) and (args[3])  # Demo-1
+    return (args[2] and args[3]) or (not args[0]) or (not args[1])  # Lagov
+    # return (not (args[0] and args[1])) and (args[2]) and (args[3])  # Demo-1
 
 
 def create_sets_from_args_num(args: int) -> list[list[int]]:
@@ -55,10 +47,9 @@ def create_sets_from_args_num(args: int) -> list[list[int]]:
                     list(product([0, 1], repeat=args))))
 
 
-INPUTS = list(map(append_left_true,
-                  list(map(get_append_bf_val_fun(bf),
-                           list(map(list,
-                                    list(product([0, 1], repeat=ARG_NUM))))))))
+INPUTS = list(list(map(get_append_bf_val_fun(bf),
+                       list(map(list,
+                                list(product([0, 1], repeat=ARG_NUM)))))))
 
 
 def display_net(inputs: list[list[int]],
@@ -67,7 +58,7 @@ def display_net(inputs: list[list[int]],
                 to_file: bool = False,
                 file_name: str = f'net-{custom_time_str()}') -> None:
     logs = modify_lists(logs)
-    logs.insert(0, ['k', 'w', 'y', 'E'])
+    logs.insert(0, ['k', 'v', 'y', 'E'])
 
     t = Texttable()
     t.set_chars(['—', '|', '+', '—'])
@@ -79,7 +70,7 @@ def display_net(inputs: list[list[int]],
         print(t.draw())
         return
     with open(f'{file_name}.log', 'w') as logger:
-        logger.write(F'NET LEARNED FROM SETS {train_set}\n')
+        logger.write(F'NET LEARNED FROM SETS\n')
         for i in train_set:
             logger.write(f'{i}\t—> {inputs[i]}\n')
         logger.write(t.draw())

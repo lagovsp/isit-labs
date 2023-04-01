@@ -14,27 +14,29 @@ def main():
     assert 0 < norm <= 1
     print(F'NORM: {norm}')
 
+    assert ep_limit > 0
+    print(F'EPS LIMIT: {ep_limit}')
+
     if not sets:
         sets = set(range(len(INPUTS)))
-    print(F'PROCESSING {sets} . . .')
+    print(F'PROCESSING {sorted(sets)} . . .')
 
-    net = Net(tf=THRESHOLD_TF, norm=norm, name=F'{name}')
+    net = RBFNet(f_tf=THRESHOLD_TF, norm=norm, name=F'{name}')
     status, logs = learn(net, INPUTS, sets, epoch_limit=ep_limit)
-
-    if not status:
-        print(F'NET CANNOT BE LEARNED WITHIN {ep_limit} EPOCHS ON SETS {sets}')
-        return
 
     display_net(INPUTS, logs, sets, to_file=True, file_name=F'{net.name}')
 
-    plt.title(F'{name} {norm} {tuple(sorted(sets))}')
-    plt.xlabel('Epochs')
+    plt.title(F'{"SUCCESS" if status else "FAIL"} {name} {norm} {sorted(sets)}')
+    plt.xlabel('Epochs, k')
     plt.ylabel('Errors, E')
 
     plt.plot(list(range(1, len(logs[1:]) + 1)), [log[3] for log in logs[1:]], marker='^')
     plt.gcf().savefig(F'{net.name}.png', dpi=500)
 
-    print('FINISHED SUCCESSFULLY')
+    if not status:
+        print(F'NET CANNOT BE LEARNED WITHIN {ep_limit} EPOCHS ON SETS {sorted(sets)}')
+        return
+    print(F'FINISHED SUCCESSFULLY ({len(logs) - 1} EPS)')
 
 
 if __name__ == '__main__':

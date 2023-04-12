@@ -14,10 +14,15 @@ def f_der(net: float) -> float:
 def init_weights(n: int, j: int, m: int,
                  w1s: list[float],
                  w2s: list[float]) -> (list[list[float]], list[list[float]]):
-    w1 = [[w1s[i] for i in range(n + 1)] for _ in range(j)]
+    # w1 = [[w1s[i] for i in range(n + 1)] for _ in range(j)]
+
     # w1 = [[0.1 for _ in range(n + 1)] for _ in range(j)]
     # w2 = [[0.1 for _ in range(j + 1)] for _ in range(m)]
-    w2 = [[w2s[i] for i in range(j + 1)] for _ in range(m)]
+
+    # w2 = [[w2s[i] for i in range(j + 1)] for _ in range(m)]
+
+    w1 = [[0.5, 1, 0.8]]
+    w2 = [[0.5, 0.6], [0.5, -0.1]]
 
     # print(w1)
     # print(w2)
@@ -35,6 +40,8 @@ def train(x: list[float],
           w2s: list[float]) -> (list[list[float]], list[list[float]]):
     w1, w2 = init_weights(n, j, m, w1s, w2s)
     epoch = 0
+
+    print(F'INIT WEIGHTS = {w1}, {w2}')
 
     while True:
         epoch += 1
@@ -56,7 +63,10 @@ def train(x: list[float],
             print(F'net_{mit + 1}(2)(e{epoch}) = {out_nets[mit]}', end='; ')
         print()
 
+        # print(out_nets)
         out_fs = [f(net) for net in out_nets]
+        # print(out_fs)
+
         for mit in range(m):
             print(F'out_{mit + 1}(2)(e{epoch}) = {out_fs[mit]}', end='; ')
         print()
@@ -67,9 +77,6 @@ def train(x: list[float],
         print(f'k = {epoch}\ty = ({ys_formatted})\t' + "{: 8.4f}".format(e))
 
         if e < eps:
-            break
-
-        if epoch == 2:
             break
 
         print(F'BACK PROPAGATION')
@@ -96,6 +103,12 @@ def train(x: list[float],
         for k in range(j):
             for i in range(n + 1):
                 w1[k][i] += norm * delta_hidden[k] * x[i]
+
+        print(F'AFTER WEIGHTS J: {w1}')
+        print(F'AFTER WEIGHTS M: {w2}')
+
+        if epoch == 2:
+            break
     return w1, w2
 
 
@@ -119,8 +132,8 @@ def main():
     N = 2
     J = 1
     M = 2
-    x = [1, 1, -1]
-    y = [0.2, -0.1]
+    x = [1, 2, -1]
+    y = [2, -2]
     norm = 1
     eps = 0.001
 

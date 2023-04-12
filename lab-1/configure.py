@@ -5,15 +5,17 @@ from datetime import datetime
 from src.single_layer_net import TF
 import math
 
-VAR = 0
+VAR = 4
 ARG_NUM = 4
 
 _th_f: Callable[[float], float] = lambda net: net
 _th_f_der: Callable[[float], float] = lambda net: 1
 THRESHOLD_TF = TF(_th_f, _th_f_der, 0)
 
-_sig_f: Callable[[float], float] = lambda net: (math.tanh(net) + 1) / 2
-_sig_f_der: Callable[[float], float] = lambda net: 1 / (2 * (math.cosh(net) ** 2))
+# _sig_f: Callable[[float], float] = lambda net: (math.tanh(net) + 1) / 2
+_sig_f: Callable[[float], float] = lambda net: (net / (1 + math.fabs(net)) + 1) / 2
+# _sig_f_der: Callable[[float], float] = lambda net: 1 / (2 * (math.cosh(net) ** 2))
+_sig_f_der: Callable[[float], float] = lambda net: 2 / ((2 + 2 * math.fabs(net)) ** 2)
 SIGMOID_TF = TF(_sig_f, _sig_f_der, 0.5)
 
 TF_TYPES = {
@@ -56,7 +58,8 @@ def bf(args: list[int]) -> bool:
     # return (not ((args[0]) and (args[1]))) and args[2] and args[3] # Enya
     # return (args[0] or args[1] or args[3]) and args[2]  # Roman
     # return (args[2] and args[3]) or (not args[0]) or (not args[1])  # Sergey
-    return (not (args[0] and args[1])) and (args[2]) and (args[3])  # Demo-1
+    # return (not (args[0] and args[1])) and (args[2]) and (args[3])  # Demo-1
+    return (((not args[0]) or args[2]) and args[1]) or (args[1] and args[3])  # Gorbatenko
 
 
 def create_sets_from_args_num(args: int) -> list[list[int]]:

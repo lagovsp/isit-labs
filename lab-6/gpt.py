@@ -72,11 +72,11 @@ def test(x: list[float],
 
 
 def main():
-    N = 2
-    J = 1
-    M = 2
-    x = [1, 1, -1]
-    y = [0.2, -0.1]
+    N = 1
+    J = 2
+    M = 1
+    x = [1, 4]
+    y = [-0.2]
     norm = 1
     eps = 0.001
 

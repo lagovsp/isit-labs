@@ -97,16 +97,16 @@ def test(x: list[float],
 
 
 def main():
-    n, j, m = 2, 1, 2
+    n, j, m = 1, 2, 1
 
-    x = [1, 1, -1]
-    y = [2, -1]
+    x = [1, 4]
+    y = [-2]
 
     norm = 1
     eps = 0.001
 
-    w1s = [[0.5, -0.7, -0.2]]
-    w2s = [[0.5, 0.3], [0.5, -0.4]]
+    w1s = [[0.5, -0.4], [0.5, -0.9]]
+    w2s = [[0.5, 0.1, -0.1]]
 
     w1, w2 = train(x, y, norm, eps, n, j, m, w1s, w2s)
     out_fs = test(x, w1, w2, n, j, m)

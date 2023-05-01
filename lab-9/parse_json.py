@@ -12,7 +12,7 @@ def main():
         with open('objects.dat', 'w') as ob_writer:
             for item in array:
                 coords = item['geoData']["coordinates"]
-                ob_writer.write(F'{item["ID"]},{item["Name"]},{coords[0]},{coords[1]},{item["AdmArea"]}\n')
+                ob_writer.write(F'{item["Name"]}&{coords[1]}&{coords[0]}&{item["AdmArea"]}\n')
                 areas.add(item["AdmArea"])
 
         print('DISTRICTS')
